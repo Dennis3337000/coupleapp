@@ -19,7 +19,8 @@ from main import (
     Countdown, set_countdown, get_countdown,
     MoodEntry, update_mood, get_moods,
     QuizAnswerSubmission, submit_quiz_answer, get_quiz_answers,
-    ProfileUpdate, update_profile, get_profile, send_hug
+    ProfileUpdate, update_profile, get_profile, send_hug,
+    LocationUpdate, get_locations, update_location
 )
 
 init_db()
@@ -140,6 +141,26 @@ def test_mood_and_quiz_and_profile():
     assert c2 == c1 + 1
     print("  -> Profile & Hugs OK")
 
+def test_live_location():
+    print("[TEST] Live Location & GPS...")
+    update_location(LocationUpdate(
+        partner="Partner A",
+        latitude=52.5200,
+        longitude=13.4050,
+        accuracy=5.5,
+        speed=14.2,
+        heading=90.0,
+        battery_level=88,
+        is_charging=False
+    ))
+    locs = get_locations()
+    assert "Partner A" in locs
+    assert locs["Partner A"]["latitude"] == 52.5200
+    assert locs["Partner A"]["speed"] == 14.2
+    assert locs["Partner A"]["battery_level"] == 88
+    assert locs["Partner A"]["is_charging"] is False
+    print("  -> Live Location OK")
+
 if __name__ == "__main__":
     try:
         test_events()
@@ -149,6 +170,7 @@ if __name__ == "__main__":
         test_bucket()
         test_countdown()
         test_mood_and_quiz_and_profile()
+        test_live_location()
         print("\n[SUCCESS] Alle Backend-Funktionen und SQLite-Queries vollstaendig verifiziert!")
     finally:
         import shutil

@@ -12,6 +12,18 @@ export interface ProfileData {
   setup_completed?: boolean | string;
 }
 
+export interface LiveLocation {
+  partner: string;
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  speed?: number; // km/h
+  heading?: number;
+  battery_level?: number;
+  is_charging?: boolean;
+  updated_at: string;
+}
+
 export interface MoodData {
   emoji: string;
   text: string;

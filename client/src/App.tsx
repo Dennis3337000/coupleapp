@@ -10,7 +10,8 @@ import type {
   BucketItem,
   NoteItem,
   CountdownItem,
-  QuestionWithAnswers
+  QuestionWithAnswers,
+  LiveLocation
 } from './types';
 import { api } from './api';
 
@@ -59,6 +60,10 @@ export default function App() {
     target_date: '2026-05-12'
   });
   const [quizData, setQuizData] = useState<QuestionWithAnswers[]>([]);
+  const [locations, setLocations] = useState<Record<string, LiveLocation>>({});
+  const [isSharingLocation, setIsSharingLocation] = useState<boolean>(() => {
+    return localStorage.getItem('cl_share_location') !== 'false';
+  });
 
   // Load all data from API on start
   useEffect(() => {
@@ -73,7 +78,8 @@ export default function App() {
           buckData,
           noteData,
           cdData,
-          qData
+          qData,
+          locData
         ] = await Promise.all([
           api.getProfile(),
           api.getMoods(),
@@ -83,7 +89,8 @@ export default function App() {
           api.getBucket(),
           api.getNotes(),
           api.getCountdown(),
-          api.getQuiz()
+          api.getQuiz(),
+          api.getLiveLocations()
         ]);
 
         if (profData) {
@@ -102,6 +109,7 @@ export default function App() {
         if (noteData) setNotes(noteData);
         if (cdData) setCountdown(cdData);
         if (qData) setQuizData(qData);
+        if (locData) setLocations(locData);
       } catch (e) {
         console.error('Fehler beim Laden der Couple-Daten:', e);
       }
@@ -128,6 +136,127 @@ export default function App() {
     localStorage.setItem('cl_user_role', newRole);
     const name = newRole === 'Partner A' ? (profile.partner_a_name || 'Partner A') : (profile.partner_b_name || 'Partner B');
     showToast(`Eingeloggt als ${name} (${newRole}) 💕`);
+  };
+
+  // Background Geolocation tracking & Partner location polling
+  useEffect(() => {
+    // 1. Periodic background polling for partner location every 8s
+    const pollInterval = setInterval(async () => {
+      try {
+        const fresh = await api.getLiveLocations();
+        if (fresh) setLocations(fresh);
+      } catch {}
+    }, 8000);
+
+    // 2. Background Geolocation tracking for active partner
+    let watchId: number | null = null;
+    let lastSent = 0;
+
+    async function sendCurrentPosition(pos: GeolocationPosition) {
+      const now = Date.now();
+      // Throttle GPS updates to max once every 10 seconds to save battery
+      if (now - lastSent < 10000) return;
+      lastSent = now;
+
+      const currentPartner = role || 'Partner A';
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const accuracy = pos.coords.accuracy || 10;
+      const speedKmH =
+        pos.coords.speed !== null && pos.coords.speed !== undefined && pos.coords.speed >= 0
+          ? Math.round(pos.coords.speed * 3.6)
+          : 0;
+
+      // Check battery
+      let batteryLevel: number | undefined = undefined;
+      let isCharging: boolean | undefined = undefined;
+      try {
+        if ('getBattery' in navigator) {
+          const b: any = await (navigator as any).getBattery();
+          batteryLevel = Math.round(b.level * 100);
+          isCharging = b.charging;
+        }
+      } catch {}
+
+      await api.updateLiveLocation({
+        partner: currentPartner,
+        latitude: lat,
+        longitude: lon,
+        accuracy,
+        speed: speedKmH,
+        heading: pos.coords.heading || 0,
+        battery_level: batteryLevel,
+        is_charging: isCharging
+      });
+
+      setLocations(prev => ({
+        ...prev,
+        [currentPartner]: {
+          partner: currentPartner,
+          latitude: lat,
+          longitude: lon,
+          accuracy,
+          speed: speedKmH,
+          heading: pos.coords.heading || 0,
+          battery_level: batteryLevel,
+          is_charging: isCharging,
+          updated_at: 'Gerade eben'
+        }
+      }));
+    }
+
+    if (isSharingLocation && 'geolocation' in navigator) {
+      watchId = navigator.geolocation.watchPosition(
+        sendCurrentPosition,
+        (err) => console.log('GPS watch warning:', err.message),
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 15000
+        }
+      );
+    }
+
+    return () => {
+      clearInterval(pollInterval);
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    };
+  }, [role, isSharingLocation]);
+
+  const handleToggleSharing = () => {
+    setIsSharingLocation(prev => {
+      const next = !prev;
+      localStorage.setItem('cl_share_location', String(next));
+      showToast(next ? 'Live-Standort teilen aktiviert 🟢' : 'Standort-Freigabe pausiert ⏸️');
+      return next;
+    });
+  };
+
+  const handleSendManualLocation = async (lat: number, lon: number, speed: number = 0) => {
+    const targetPartner = role === 'Partner A' ? 'Partner B' : 'Partner A';
+    await api.updateLiveLocation({
+      partner: targetPartner,
+      latitude: lat,
+      longitude: lon,
+      accuracy: 8,
+      speed,
+      battery_level: 78,
+      is_charging: false
+    });
+    setLocations(prev => ({
+      ...prev,
+      [targetPartner]: {
+        partner: targetPartner,
+        latitude: lat,
+        longitude: lon,
+        accuracy: 8,
+        speed,
+        battery_level: 78,
+        is_charging: false,
+        updated_at: 'Gerade eben'
+      }
+    }));
+    showToast(`Test-Standort von ${targetPartner} aktualisiert! (${speed} km/h 🚗)`);
   };
 
   const handleCompleteOnboarding = async (completedProfile: ProfileData, selectedRole: UserRole) => {
@@ -372,8 +501,12 @@ export default function App() {
 
         {activeTab === 'distance' && (
           <DistanceView
+            locations={locations}
             profile={profile}
             role={role}
+            isSharingLocation={isSharingLocation}
+            onToggleSharing={handleToggleSharing}
+            onSendManualLocation={handleSendManualLocation}
             onUpdateCity={handleUpdateProfileKey}
             onSendHug={handleSendHug}
           />

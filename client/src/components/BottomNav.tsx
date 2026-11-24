@@ -13,7 +13,7 @@ export default function BottomNav({ activeTab, onSelectTab, shoppingBadgeCount }
     { id: 'meals', label: 'Essen', icon: Utensils },
     { id: 'quiz', label: 'Quiz', icon: HelpCircle },
     { id: 'lists', label: 'Listen', icon: CheckSquare, badge: shoppingBadgeCount },
-    { id: 'distance', label: 'Distanz', icon: MapPin }
+    { id: 'distance', label: 'Karte', icon: MapPin }
   ];
 
   return (

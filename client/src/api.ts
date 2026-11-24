@@ -7,7 +7,8 @@ import type {
   BucketItem,
   NoteItem,
   CountdownItem,
-  QuestionWithAnswers
+  QuestionWithAnswers,
+  LiveLocation
 } from './types';
 
 // Relative path so it works seamlessly under /couple/ or /
@@ -70,6 +71,31 @@ const DEFAULT_COUNTDOWN: CountdownItem = {
   id: 1,
   title: 'Unser nächstes Wiedersehen 💕',
   target_date: '2026-05-12'
+};
+
+const DEFAULT_LOCATIONS: Record<string, LiveLocation> = {
+  'Partner A': {
+    partner: 'Partner A',
+    latitude: 52.5200,
+    longitude: 13.4050,
+    accuracy: 8,
+    speed: 0,
+    heading: 0,
+    battery_level: 84,
+    is_charging: false,
+    updated_at: 'Gerade eben'
+  },
+  'Partner B': {
+    partner: 'Partner B',
+    latitude: 48.1351,
+    longitude: 11.5820,
+    accuracy: 12,
+    speed: 28,
+    heading: 180,
+    battery_level: 76,
+    is_charging: true,
+    updated_at: 'Vor 1 Min'
+  }
 };
 
 const DEFAULT_QUIZ: QuestionWithAnswers[] = [
@@ -413,6 +439,25 @@ export const api = {
     await fetchWithFallback('quiz/answer', {
       method: 'POST',
       body: JSON.stringify({ question_id, question_text, partner, answer })
+    });
+  },
+
+  // Live Locations & GPS Tracking
+  async getLiveLocations(): Promise<Record<string, LiveLocation>> {
+    return await fetchWithFallback<Record<string, LiveLocation>>('location', undefined, 'locations', DEFAULT_LOCATIONS);
+  },
+
+  async updateLiveLocation(location: Omit<LiveLocation, 'updated_at'>): Promise<void> {
+    const locs = getLocal<Record<string, LiveLocation>>('locations', DEFAULT_LOCATIONS);
+    locs[location.partner] = {
+      ...location,
+      updated_at: 'Gerade eben'
+    };
+    setLocal('locations', locs);
+
+    await fetchWithFallback('location', {
+      method: 'POST',
+      body: JSON.stringify(location)
     });
   }
 };

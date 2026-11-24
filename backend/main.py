@@ -112,6 +112,19 @@ def init_db():
             value TEXT NOT NULL
         )
     ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS locations (
+            partner TEXT PRIMARY KEY,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            accuracy REAL,
+            speed REAL,
+            heading REAL,
+            battery_level INTEGER,
+            is_charging BOOLEAN,
+            updated_at TEXT NOT NULL
+        )
+    ''')
 
     # Spalten-Migrationen falls Tabellen bereits ohne neue Spalten existierten
     for table, col, col_type in [
@@ -146,6 +159,12 @@ def init_db():
               ("Partner A", "😊", "Glücklich & dankbar", now))
     c.execute("INSERT OR IGNORE INTO moods (partner, emoji, text, updated_at) VALUES (?, ?, ?, ?)",
               ("Partner B", "🥰", "Vermisse dich!", now))
+
+    # Standard Standorte setzen falls leer
+    c.execute("INSERT OR IGNORE INTO locations (partner, latitude, longitude, accuracy, speed, heading, battery_level, is_charging, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ("Partner A", 52.5200, 13.4050, 15.0, 0.0, 0.0, 85, 0, now))
+    c.execute("INSERT OR IGNORE INTO locations (partner, latitude, longitude, accuracy, speed, heading, battery_level, is_charging, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              ("Partner B", 48.1351, 11.5820, 20.0, 28.5, 180.0, 72, 1, now))
 
     conn.commit()
     conn.close()
@@ -198,6 +217,16 @@ class QuizAnswerSubmission(BaseModel):
 class ProfileUpdate(BaseModel):
     key: str
     value: str
+
+class LocationUpdate(BaseModel):
+    partner: str
+    latitude: float
+    longitude: float
+    accuracy: Optional[float] = None
+    speed: Optional[float] = None
+    heading: Optional[float] = None
+    battery_level: Optional[int] = None
+    is_charging: Optional[bool] = None
 
 # --- API Routen: Shopping List ---
 @app.get("/api/shopping")
@@ -510,6 +539,61 @@ def send_hug():
     conn.commit()
     conn.close()
     return {"hugs_count": count}
+
+# --- API Routen: Live Location & GPS Tracking ---
+@app.get("/api/location")
+def get_locations():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT partner, latitude, longitude, accuracy, speed, heading, battery_level, is_charging, updated_at FROM locations")
+    rows = c.fetchall()
+    conn.close()
+    result = {}
+    for r in rows:
+        result[r[0]] = {
+            "partner": r[0],
+            "latitude": r[1],
+            "longitude": r[2],
+            "accuracy": r[3],
+            "speed": r[4],
+            "heading": r[5],
+            "battery_level": r[6],
+            "is_charging": bool(r[7]) if r[7] is not None else None,
+            "updated_at": r[8]
+        }
+    return result
+
+@app.post("/api/location")
+def update_location(loc: LocationUpdate):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    now = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+    c.execute('''
+        INSERT INTO locations (partner, latitude, longitude, accuracy, speed, heading, battery_level, is_charging, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(partner) DO UPDATE SET
+            latitude=excluded.latitude,
+            longitude=excluded.longitude,
+            accuracy=excluded.accuracy,
+            speed=excluded.speed,
+            heading=excluded.heading,
+            battery_level=excluded.battery_level,
+            is_charging=excluded.is_charging,
+            updated_at=excluded.updated_at
+    ''', (
+        loc.partner,
+        loc.latitude,
+        loc.longitude,
+        loc.accuracy,
+        loc.speed,
+        loc.heading,
+        loc.battery_level,
+        1 if loc.is_charging else 0 if loc.is_charging is not None else None,
+        now
+    ))
+    conn.commit()
+    conn.close()
+    return {"success": True, "updated_at": now, "partner": loc.partner}
 
 # --- Static Files & PWA Routing ---
 FRONTEND_DIR = os.getenv("FRONTEND_DIR", "/app/frontend" if os.path.exists("/app/frontend") else os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend")))
