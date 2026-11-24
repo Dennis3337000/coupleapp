@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Heart, Sparkles, Send, Utensils, Calendar, CheckSquare, MessageCircleHeart, Cake } from 'lucide-react';
-import type { ProfileData, MoodData, CountdownItem, EventItem, MealItem, NoteItem, UserRole } from '../types';
+import { Heart, Sparkles, Send, Utensils, Calendar, CheckSquare, MessageCircleHeart, Cake, Navigation } from 'lucide-react';
+import type { ProfileData, MoodData, CountdownItem, EventItem, MealItem, NoteItem, UserRole, LiveLocation } from '../types';
 
 const EMOJI_OPTIONS = ['🥰', '😊', '😴', '🥳', '😭', '🥺', '☕', '🍕', '🤒'];
 
@@ -13,6 +13,7 @@ interface DashboardProps {
   events: EventItem[];
   meals: MealItem[];
   notes: NoteItem[];
+  locations?: Record<string, LiveLocation>;
   onUpdateMood: (emoji: string, text: string) => void;
   onSendHug: () => void;
   onNavigateTab: (tab: string) => void;
@@ -48,6 +49,7 @@ export default function Dashboard({
   events,
   meals,
   notes,
+  locations,
   onUpdateMood,
   onSendHug,
   onNavigateTab
@@ -92,6 +94,24 @@ export default function Dashboard({
     nextBirthdayInfo = { name: profile.partner_a_name || 'Partner A', ...partnerABday };
   } else if (partnerBBday) {
     nextBirthdayInfo = { name: profile.partner_b_name || 'Partner B', ...partnerBBday };
+  }
+
+  // Live Location details
+  const myLoc = locations?.[role || 'Partner A'];
+  const partnerLoc = locations?.[partnerRole];
+  let distanceBetweenKm: number | null = null;
+  if (myLoc && partnerLoc) {
+    const R = 6371;
+    const dLat = ((partnerLoc.latitude - myLoc.latitude) * Math.PI) / 180;
+    const dLon = ((partnerLoc.longitude - myLoc.longitude) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((myLoc.latitude * Math.PI) / 180) *
+        Math.cos((partnerLoc.latitude * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    distanceBetweenKm = Math.round(R * c * 10) / 10;
   }
 
   const handleSaveMood = () => {
@@ -169,6 +189,42 @@ export default function Dashboard({
           </div>
         </div>
       )}
+
+      {/* Live GPS & Karte Widget auf dem Dashboard */}
+      <div
+        onClick={() => onNavigateTab('map')}
+        className="cursor-pointer glass-panel p-3.5 rounded-2xl shadow-xs border border-pink-200/90 hover:border-pink-300 transition-all flex items-center justify-between active:scale-98 group"
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-purple-400 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Navigation size={20} className="animate-pulse" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-black uppercase text-pink-600 tracking-wide">
+                Live GPS & Karte
+              </span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-ping" />
+            </div>
+            <h4 className="font-black text-xs text-gray-800 truncate">
+              {partnerLoc
+                ? `${partnerName} • ${partnerLoc.speed && partnerLoc.speed > 5 ? `Fährt ${Math.round(partnerLoc.speed)} km/h 🚗` : 'Vor Ort 🏠'}`
+                : `Standort von ${partnerName}`}
+            </h4>
+            <p className="text-[10px] text-gray-500 truncate">
+              {distanceBetweenKm !== null
+                ? `${distanceBetweenKm === 0 ? 'Am selben Ort 💕' : `${distanceBetweenKm} km entfernt`} • 🔋 ${partnerLoc?.battery_level || 85}%`
+                : 'Tippen um Live-Karte & Tempo zu öffnen →'}
+            </p>
+          </div>
+        </div>
+
+        <div className="shrink-0 pl-2">
+          <span className="bg-pink-100 group-hover:bg-pink-200 text-pink-700 font-extrabold text-[11px] px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1">
+            Karte 🗺️
+          </span>
+        </div>
+      </div>
 
       {/* Mood Sharing Widget */}
       <div className="glass-panel p-3.5 rounded-2xl shadow-xs">

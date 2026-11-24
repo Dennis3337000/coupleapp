@@ -19,11 +19,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Cache deaktivieren Middleware
+# Cache deaktivieren Middleware fuer API und HTML
 @app.middleware("http")
 async def add_cache_control_header(request, call_next):
     response = await call_next(request)
-    if request.url.path.startswith("/api/"):
+    path = request.url.path
+    if path.startswith("/api/") or path == "/" or path.endswith(".html") or "." not in path:
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
@@ -605,7 +606,7 @@ if os.path.exists(FRONTEND_DIR):
 def serve_frontend():
     index_file = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_file):
-        return FileResponse(index_file)
+        return FileResponse(index_file, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
     return {"message": "Couple App API online"}
 
 @app.get("/{file_path:path}")
@@ -618,7 +619,7 @@ def serve_frontend_files(file_path: str):
         return FileResponse(file)
     index_file = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_file):
-        return FileResponse(index_file)
+        return FileResponse(index_file, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
     from fastapi import HTTPException
     raise HTTPException(status_code=404, detail="File not found")
 

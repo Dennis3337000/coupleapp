@@ -446,6 +446,7 @@ export default function App() {
             events={events}
             meals={meals}
             notes={notes}
+            locations={locations}
             onUpdateMood={handleUpdateMood}
             onSendHug={handleSendHug}
             onNavigateTab={setActiveTab}
@@ -499,7 +500,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'distance' && (
+        {(activeTab === 'map' || activeTab === 'distance') && (
           <DistanceView
             locations={locations}
             profile={profile}
