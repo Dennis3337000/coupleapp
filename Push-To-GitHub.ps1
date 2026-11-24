@@ -5,21 +5,28 @@ param(
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptPath
 
-Write-Host "Initialisiere Git Repository..." -ForegroundColor Cyan
-if (-not (Test-Path ".git")) {
-    git init
-    git branch -M main
-}
-
-Write-Host "Fuege Dateien hinzu..." -ForegroundColor Cyan
+Write-Host "Fuege alle Aenderungen hinzu..." -ForegroundColor Cyan
 git add .
-git commit -m "Initial commit: Couple Link App - MVP with Calendar, Meal Planner, Quiz, Lists, Distance & FastAPI Backend"
+$msg = Read-Host "Commit-Nachricht (Enter fuer Standard)"
+if ([string]::IsNullOrWhiteSpace($msg)) {
+    $msg = "Update Couple Link App: $(Get-Date -Format 'dd.MM.yyyy HH:mm')"
+}
+git commit -m $msg
 
-Write-Host "Setze Remote Origin auf $RepoUrl..." -ForegroundColor Cyan
-git remote remove origin 2>$null
-git remote add origin $RepoUrl
-
-Write-Host "Pushe auf GitHub main branch..." -ForegroundColor Cyan
-git push -u origin main
+Write-Host "Pushe auf GitHub ($RepoUrl)..." -ForegroundColor Cyan
+try {
+    $cred = ("protocol=https`nhost=github.com" | git credential-manager get)
+    $user = ($cred | Select-String "username=(.*)").Matches.Groups[1].Value
+    $token = ($cred | Select-String "password=(.*)").Matches.Groups[1].Value
+    if ($user -and $token) {
+        git push "https://${user}:${token}@github.com/Dennis3337000/coupleapp.git" main:main -u
+    } else {
+        git push -u origin main
+    }
+} catch {
+    git push -u origin main
+} finally {
+    git remote set-url origin $RepoUrl
+}
 
 Write-Host "Erfolgreich auf GitHub gepusht! ($RepoUrl)" -ForegroundColor Green
