@@ -38,7 +38,6 @@ function calculateHaversine(cityA: string, cityB: string): number {
   const coordB = CITY_COORDS[cityB];
 
   if (!coordA || !coordB) {
-    // Fallback pseudo distance if unknown city
     if (cityA.toLowerCase() === cityB.toLowerCase()) return 0;
     const hash = (cityA.length + cityB.length) * 37;
     return 120 + (hash % 600);
@@ -90,107 +89,102 @@ export default function DistanceView({
   };
 
   return (
-    <div className="space-y-4 animate-in">
+    <div className="space-y-3 pb-3 animate-in w-full max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-extrabold text-gray-800">Distanz-Radar</h2>
-          <p className="text-xs text-gray-400 font-medium">Liebe kennt keine Entfernung 💕</p>
-        </div>
+      <div>
+        <h2 className="text-base font-black text-gray-800">Distanz-Radar</h2>
+        <p className="text-xs text-gray-400 font-medium">Liebe kennt keine Entfernung 💕</p>
       </div>
 
       {/* Main Distance Visual Card */}
-      <div className="glass-panel p-6 rounded-3xl shadow-sm text-center relative overflow-hidden">
-        <div className="absolute top-[-30px] left-[-30px] w-36 h-36 bg-[var(--color-primary-light)] rounded-full blur-3xl opacity-50" />
-        <div className="absolute bottom-[-30px] right-[-30px] w-36 h-36 bg-[var(--color-secondary)] rounded-full blur-3xl opacity-40" />
-
+      <div className="glass-panel p-4 rounded-3xl shadow-xs text-center relative overflow-hidden">
         <div className="relative z-10">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <span className="text-[9px] font-black uppercase tracking-wider text-gray-400">
             Luftlinie zwischen euch
           </span>
 
           {distanceKm === 0 ? (
-            <div className="my-3">
-              <span className="text-4xl font-extrabold gradient-text">Am selben Ort! 🥰</span>
-              <p className="text-xs text-gray-500 mt-1">Ihr seid zusammen in einer Stadt.</p>
+            <div className="my-2">
+              <span className="text-2xl font-black gradient-text">Am selben Ort! 🥰</span>
+              <p className="text-[11px] text-gray-500 mt-0.5">Ihr seid zusammen in einer Stadt.</p>
             </div>
           ) : (
-            <div className="my-2">
-              <div className="text-5xl font-black gradient-text tracking-tight flex items-center justify-center gap-1">
+            <div className="my-1.5">
+              <div className="text-4xl font-black gradient-text tracking-tight flex items-center justify-center gap-1">
                 <span>{distanceKm}</span>
-                <span className="text-2xl font-bold text-gray-500">km</span>
+                <span className="text-xl font-bold text-gray-500">km</span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-[11px] text-gray-500 mt-0.5 truncate px-1">
                 {profile.partner_a_name} ({cityA}) ↔ {profile.partner_b_name} ({cityB})
               </p>
             </div>
           )}
 
           {/* Connected Bridge Graphics */}
-          <div className="my-6 px-4 relative flex items-center justify-between">
+          <div className="my-4 px-2 relative flex items-center justify-between">
             {/* Animated dotted connecting line */}
-            <div className="absolute left-8 right-8 top-1/2 h-0.5 border-t-2 border-dashed border-pink-300 -translate-y-1/2 z-0" />
+            <div className="absolute left-6 right-6 top-1/2 h-0.5 border-t-2 border-dashed border-pink-300 -translate-y-1/2 z-0" />
 
             {/* City A Dot */}
-            <div className="z-10 flex flex-col items-center">
-              <div className="w-11 h-11 bg-pink-100 border-2 border-pink-400 rounded-2xl flex items-center justify-center shadow-md text-pink-600">
-                <MapPin size={20} />
+            <div className="z-10 flex flex-col items-center min-w-0 max-w-[80px]">
+              <div className="w-9 h-9 bg-pink-100 border-2 border-pink-400 rounded-xl flex items-center justify-center shadow-xs text-pink-600 shrink-0">
+                <MapPin size={16} />
               </div>
-              <span className="text-xs font-black text-gray-800 mt-1">{cityA}</span>
-              <span className="text-[10px] text-gray-400 font-bold">{profile.partner_a_name}</span>
+              <span className="text-[11px] font-black text-gray-800 mt-1 truncate w-full">{cityA}</span>
+              <span className="text-[9px] text-gray-400 font-bold truncate w-full">{profile.partner_a_name}</span>
             </div>
 
             {/* Animated Heart in the middle */}
-            <div className="z-10 bg-white p-2 rounded-full shadow-md border border-pink-200 animate-pulse">
-              <Heart size={18} fill="#ff9a9e" className="text-[var(--color-primary)]" />
+            <div className="z-10 bg-white p-1.5 rounded-full shadow-xs border border-pink-200 animate-pulse shrink-0">
+              <Heart size={14} fill="#ff9a9e" className="text-[var(--color-primary)]" />
             </div>
 
             {/* City B Dot */}
-            <div className="z-10 flex flex-col items-center">
-              <div className="w-11 h-11 bg-purple-100 border-2 border-purple-400 rounded-2xl flex items-center justify-center shadow-md text-purple-600">
-                <MapPin size={20} />
+            <div className="z-10 flex flex-col items-center min-w-0 max-w-[80px]">
+              <div className="w-9 h-9 bg-purple-100 border-2 border-purple-400 rounded-xl flex items-center justify-center shadow-xs text-purple-600 shrink-0">
+                <MapPin size={16} />
               </div>
-              <span className="text-xs font-black text-gray-800 mt-1">{cityB}</span>
-              <span className="text-[10px] text-gray-400 font-bold">{profile.partner_b_name}</span>
+              <span className="text-[11px] font-black text-gray-800 mt-1 truncate w-full">{cityB}</span>
+              <span className="text-[9px] text-gray-400 font-bold truncate w-full">{profile.partner_b_name}</span>
             </div>
           </div>
 
           {/* Travel Times Grid */}
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
-            <div className="bg-white/70 p-2.5 rounded-2xl border border-pink-50 text-center">
-              <Train size={16} className="mx-auto mb-1 text-pink-500" />
-              <span className="text-[9px] uppercase font-bold text-gray-400 block">Bahn</span>
-              <span className="text-xs font-black text-gray-700">~{trainHours} Std</span>
+          <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-gray-100">
+            <div className="bg-white/70 p-2 rounded-xl border border-pink-50 text-center min-w-0">
+              <Train size={14} className="mx-auto mb-0.5 text-pink-500" />
+              <span className="text-[8px] uppercase font-bold text-gray-400 block truncate">Bahn</span>
+              <span className="text-[11px] font-black text-gray-700 truncate block">~{trainHours}h</span>
             </div>
-            <div className="bg-white/70 p-2.5 rounded-2xl border border-pink-50 text-center">
-              <Car size={16} className="mx-auto mb-1 text-purple-500" />
-              <span className="text-[9px] uppercase font-bold text-gray-400 block">Auto</span>
-              <span className="text-xs font-black text-gray-700">~{carHours} Std</span>
+            <div className="bg-white/70 p-2 rounded-xl border border-pink-50 text-center min-w-0">
+              <Car size={14} className="mx-auto mb-0.5 text-purple-500" />
+              <span className="text-[8px] uppercase font-bold text-gray-400 block truncate">Auto</span>
+              <span className="text-[11px] font-black text-gray-700 truncate block">~{carHours}h</span>
             </div>
-            <div className="bg-white/70 p-2.5 rounded-2xl border border-pink-50 text-center">
-              <Plane size={16} className="mx-auto mb-1 text-blue-500" />
-              <span className="text-[9px] uppercase font-bold text-gray-400 block">Flug</span>
-              <span className="text-xs font-black text-gray-700">~{flightHours} Std</span>
+            <div className="bg-white/70 p-2 rounded-xl border border-pink-50 text-center min-w-0">
+              <Plane size={14} className="mx-auto mb-0.5 text-blue-500" />
+              <span className="text-[8px] uppercase font-bold text-gray-400 block truncate">Flug</span>
+              <span className="text-[11px] font-black text-gray-700 truncate block">~{flightHours}h</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* City Pickers */}
-      <div className="glass-panel p-4 rounded-3xl shadow-sm space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+      <div className="glass-panel p-3.5 rounded-2xl shadow-xs space-y-2">
+        <h3 className="text-[10px] font-black uppercase tracking-wider text-gray-500">
           Standorte anpassen
         </h3>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-[10px] font-bold text-pink-600 block mb-1">
-              Stadt von {profile.partner_a_name}:
+            <label className="text-[10px] font-bold text-pink-600 block mb-0.5 truncate">
+              {profile.partner_a_name}:
             </label>
             <select
               value={cityA}
               onChange={e => handleCityAChange(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold text-gray-700 focus:outline-none focus:border-pink-400"
+              className="w-full bg-white border border-gray-200 rounded-xl px-2 py-1.5 text-xs font-bold text-gray-700 focus:outline-none focus:border-pink-400 truncate"
             >
               {Object.keys(CITY_COORDS).map(city => (
                 <option key={city} value={city}>{city}</option>
@@ -199,13 +193,13 @@ export default function DistanceView({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-purple-600 block mb-1">
-              Stadt von {profile.partner_b_name}:
+            <label className="text-[10px] font-bold text-purple-600 block mb-0.5 truncate">
+              {profile.partner_b_name}:
             </label>
             <select
               value={cityB}
               onChange={e => handleCityBChange(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold text-gray-700 focus:outline-none focus:border-purple-400"
+              className="w-full bg-white border border-gray-200 rounded-xl px-2 py-1.5 text-xs font-bold text-gray-700 focus:outline-none focus:border-purple-400 truncate"
             >
               {Object.keys(CITY_COORDS).map(city => (
                 <option key={city} value={city}>{city}</option>
@@ -216,22 +210,21 @@ export default function DistanceView({
       </div>
 
       {/* Sweet Long Distance Button */}
-      <div className="text-center pt-1">
-        <button
-          onClick={triggerHug}
-          className="w-full bg-gradient-to-r from-pink-500 via-rose-400 to-purple-400 text-white py-3.5 rounded-2xl text-xs font-extrabold shadow-md hover:shadow-lg active:scale-98 transition-all flex items-center justify-center gap-2"
-        >
-          {hugSent ? (
-            <>
-              <Sparkles size={16} className="animate-spin" /> Umarmung über {distanceKm} km gesendet! 💕
-            </>
-          ) : (
-            <>
-              <Heart size={16} fill="white" /> Virtuelle Umarmung über die Distanz schicken
-            </>
-          )}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={triggerHug}
+        className="w-full bg-gradient-to-r from-pink-500 via-rose-400 to-purple-400 text-white py-3 rounded-2xl text-xs font-black shadow-xs hover:shadow-md active:scale-98 transition-all flex items-center justify-center gap-1.5"
+      >
+        {hugSent ? (
+          <>
+            <Sparkles size={14} className="animate-spin" /> Umarmung über {distanceKm} km gesendet! 💕
+          </>
+        ) : (
+          <>
+            <Heart size={14} fill="white" /> Virtuelle Umarmung schicken 🤗
+          </>
+        )}
+      </button>
     </div>
   );
 }

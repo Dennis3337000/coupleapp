@@ -41,7 +41,7 @@ export default function ListsView({
   const [newNoteContent, setNewNoteContent] = useState('');
   const [newNoteColor, setNewNoteColor] = useState('#fef3c7');
 
-  const currentAuthorName = role === 'Partner A' ? profile.partner_a_name : profile.partner_b_name;
+  const currentAuthorName = role === 'Partner A' ? (profile.partner_a_name || 'Partner A') : (profile.partner_b_name || 'Partner B');
 
   const handleAddShopping = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,95 +64,110 @@ export default function ListsView({
     setNewNoteContent('');
   };
 
+  const openShoppingCount = shopping.filter(s => !s.is_bought).length;
+
   return (
-    <div className="space-y-4 animate-in">
+    <div className="space-y-3 pb-3 animate-in w-full max-w-full overflow-hidden">
       {/* Header and Sub-Tab Switcher */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-extrabold text-gray-800">Gemeinsames</h2>
-          <p className="text-xs text-gray-400 font-medium">Einkäufe, Träume & Liebesnotizen</p>
-        </div>
+      <div>
+        <h2 className="text-base font-black text-gray-800">Gemeinsame Listen</h2>
+        <p className="text-xs text-gray-400 font-medium">Einkäufe, Wünsche & Liebeszettel</p>
       </div>
 
       {/* Pill Switcher */}
-      <div className="flex bg-white/80 p-1 rounded-2xl shadow-xs border border-gray-100">
+      <div className="flex bg-white/90 p-1 rounded-2xl shadow-xs border border-gray-100 gap-1 w-full">
         <button
           onClick={() => setActiveSubTab('shopping')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-            activeSubTab === 'shopping' ? 'bg-[var(--color-primary)] text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
+          type="button"
+          className={`flex-1 py-1.5 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 min-w-0 ${
+            activeSubTab === 'shopping'
+              ? 'bg-[var(--color-primary)] text-white shadow-xs'
+              : 'text-gray-500 hover:text-gray-800'
           }`}
         >
-          <ShoppingBag size={14} /> Einkaufen ({shopping.filter(s => !s.is_bought).length})
+          <ShoppingBag size={13} className="shrink-0" />
+          <span className="truncate">Einkauf {openShoppingCount > 0 ? `(${openShoppingCount})` : ''}</span>
         </button>
+
         <button
           onClick={() => setActiveSubTab('bucket')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-            activeSubTab === 'bucket' ? 'bg-[var(--color-primary)] text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
+          type="button"
+          className={`flex-1 py-1.5 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 min-w-0 ${
+            activeSubTab === 'bucket'
+              ? 'bg-[var(--color-primary)] text-white shadow-xs'
+              : 'text-gray-500 hover:text-gray-800'
           }`}
         >
-          <Heart size={14} /> Bucket List
+          <Heart size={13} className="shrink-0" />
+          <span className="truncate">Wünsche</span>
         </button>
+
         <button
           onClick={() => setActiveSubTab('notes')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-            activeSubTab === 'notes' ? 'bg-[var(--color-primary)] text-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
+          type="button"
+          className={`flex-1 py-1.5 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1 min-w-0 ${
+            activeSubTab === 'notes'
+              ? 'bg-[var(--color-primary)] text-white shadow-xs'
+              : 'text-gray-500 hover:text-gray-800'
           }`}
         >
-          <MessageSquareHeart size={14} /> Zettel ({notes.length})
+          <MessageSquareHeart size={13} className="shrink-0" />
+          <span className="truncate">Zettel ({notes.length})</span>
         </button>
       </div>
 
       {/* SUB-TAB 1: SHOPPING LIST */}
       {activeSubTab === 'shopping' && (
-        <div className="space-y-3 animate-in">
+        <div className="space-y-2.5 animate-in">
           {/* Add input */}
-          <form onSubmit={handleAddShopping} className="flex gap-2">
+          <form onSubmit={handleAddShopping} className="flex gap-1.5 w-full">
             <input
               type="text"
               required
-              placeholder="Was brauchen wir? (z.B. Schokolade 🍫)"
+              placeholder="Was brauchen wir? (z.B. Erdbeeren 🍓)"
               value={newShoppingItem}
               onChange={e => setNewShoppingItem(e.target.value)}
-              className="flex-1 bg-white border border-gray-200 rounded-2xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-pink-400 shadow-xs"
+              className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-pink-400 shadow-xs min-w-0"
             />
             <button
               type="submit"
-              className="bg-[var(--color-primary)] text-white px-4 rounded-2xl text-xs font-bold shadow-md hover:bg-[var(--color-primary-dark)] flex items-center gap-1"
+              className="bg-[var(--color-primary)] text-white px-3.5 rounded-xl text-xs font-bold shadow-xs hover:bg-[var(--color-primary-dark)] shrink-0 flex items-center gap-1"
             >
               <Plus size={16} />
             </button>
           </form>
 
           {/* List items */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {shopping.length === 0 ? (
-              <div className="glass-panel p-8 text-center text-gray-400 rounded-3xl">
-                <ShoppingBag size={32} className="mx-auto mb-2 opacity-30" />
+              <div className="glass-panel p-6 text-center text-gray-400 rounded-2xl">
+                <ShoppingBag size={28} className="mx-auto mb-1.5 opacity-30" />
                 <p className="text-xs">Alles erledigt! Der Kühlschrank ist voll 🎉</p>
               </div>
             ) : (
               shopping.map(item => (
                 <div
                   key={item.id}
-                  className={`glass-panel p-3 rounded-2xl flex items-center justify-between transition-all border ${
+                  className={`glass-panel p-2.5 rounded-xl flex items-center justify-between transition-all border ${
                     item.is_bought ? 'opacity-60 bg-gray-50/70 border-gray-100' : 'border-white/80'
                   }`}
                 >
                   <button
                     onClick={() => onToggleShopping(item.id, !item.is_bought)}
-                    className="flex items-center gap-2.5 flex-1 text-left"
+                    type="button"
+                    className="flex items-center gap-2 flex-1 text-left min-w-0"
                   >
                     <div
-                      className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-colors ${
+                      className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
                         item.is_bought
                           ? 'bg-emerald-500 border-emerald-500 text-white'
                           : 'border-gray-300 bg-white hover:border-pink-400'
                       }`}
                     >
-                      {item.is_bought && <Check size={14} />}
+                      {item.is_bought && <Check size={12} />}
                     </div>
                     <span
-                      className={`text-xs font-bold ${
+                      className={`text-xs font-bold truncate ${
                         item.is_bought ? 'line-through text-gray-400' : 'text-gray-800'
                       }`}
                     >
@@ -162,9 +177,10 @@ export default function ListsView({
 
                   <button
                     onClick={() => onDeleteShopping(item.id)}
-                    className="text-gray-300 hover:text-rose-500 p-1 rounded-lg"
+                    type="button"
+                    className="text-gray-300 hover:text-rose-500 p-1 rounded-lg shrink-0"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={13} />
                   </button>
                 </div>
               ))
@@ -175,64 +191,66 @@ export default function ListsView({
 
       {/* SUB-TAB 2: BUCKET LIST */}
       {activeSubTab === 'bucket' && (
-        <div className="space-y-3 animate-in">
+        <div className="space-y-2.5 animate-in">
           {/* Add Bucket Goal */}
-          <form onSubmit={handleAddBucket} className="flex gap-2">
+          <form onSubmit={handleAddBucket} className="flex gap-1.5 w-full">
             <input
               type="text"
               required
-              placeholder="Unser nächster Traum (z.B. Reise nach Rom 🏛️)"
+              placeholder="Neuer Wunsch (z.B. Rom-Trip 🏛️)"
               value={newBucketTitle}
               onChange={e => setNewBucketTitle(e.target.value)}
-              className="flex-1 bg-white border border-gray-200 rounded-2xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-pink-400 shadow-xs"
+              className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-pink-400 shadow-xs min-w-0"
             />
             <button
               type="submit"
-              className="bg-purple-500 text-white px-4 rounded-2xl text-xs font-bold shadow-md hover:bg-purple-600 flex items-center gap-1"
+              className="bg-purple-500 text-white px-3.5 rounded-xl text-xs font-bold shadow-xs hover:bg-purple-600 shrink-0 flex items-center gap-1"
             >
               <Plus size={16} />
             </button>
           </form>
 
           {/* Bucket items */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {bucket.map(b => (
               <div
                 key={b.id}
-                className={`glass-panel p-3.5 rounded-2xl flex items-center justify-between transition-all border ${
+                className={`glass-panel p-2.5 rounded-xl flex items-center justify-between transition-all border ${
                   b.is_done ? 'bg-purple-50/60 border-purple-100' : 'border-white/80'
                 }`}
               >
                 <button
                   onClick={() => onToggleBucket(b.id, !b.is_done)}
-                  className="flex items-center gap-3 flex-1 text-left"
+                  type="button"
+                  className="flex items-center gap-2.5 flex-1 text-left min-w-0"
                 >
                   <div
-                    className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                       b.is_done
                         ? 'bg-purple-500 border-purple-500 text-white'
                         : 'border-pink-300 bg-white hover:bg-pink-50'
                     }`}
                   >
-                    <Heart size={12} fill={b.is_done ? 'white' : 'transparent'} />
+                    <Heart size={10} fill={b.is_done ? 'white' : 'transparent'} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span
-                      className={`text-xs font-extrabold ${
+                      className={`text-xs font-extrabold block truncate ${
                         b.is_done ? 'line-through text-purple-400' : 'text-gray-800'
                       }`}
                     >
                       {b.title}
                     </span>
-                    <span className="text-[10px] block text-gray-400">{b.category}</span>
+                    <span className="text-[9px] block text-gray-400 truncate">{b.category}</span>
                   </div>
                 </button>
 
                 <button
                   onClick={() => onDeleteBucket(b.id)}
-                  className="text-gray-300 hover:text-rose-500 p-1.5 rounded-lg"
+                  type="button"
+                  className="text-gray-300 hover:text-rose-500 p-1 rounded-lg shrink-0"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
@@ -242,11 +260,11 @@ export default function ListsView({
 
       {/* SUB-TAB 3: NOTES / LIEBESZETTEL */}
       {activeSubTab === 'notes' && (
-        <div className="space-y-4 animate-in">
+        <div className="space-y-3 animate-in">
           {/* Add note card */}
-          <form onSubmit={handleAddNote} className="glass-panel p-4 rounded-3xl shadow-sm space-y-3">
-            <span className="text-xs font-bold text-gray-600 block">
-              Liebesbotschaft für deinen Schatz hinterlassen 💌
+          <form onSubmit={handleAddNote} className="glass-panel p-3.5 rounded-2xl shadow-xs space-y-2">
+            <span className="text-[11px] font-black text-gray-600 block">
+              Liebesbotschaft anpinnen 💌
             </span>
             <textarea
               required
@@ -254,7 +272,7 @@ export default function ListsView({
               placeholder="Schreib etwas Liebes..."
               value={newNoteContent}
               onChange={e => setNewNoteContent(e.target.value)}
-              className="w-full bg-white/80 border border-gray-200 rounded-2xl p-3 text-xs focus:outline-none focus:border-pink-400"
+              className="w-full bg-white/90 border border-gray-200 rounded-xl p-2.5 text-xs focus:outline-none focus:border-pink-400"
             />
             <div className="flex items-center justify-between">
               {/* Color picker */}
@@ -270,7 +288,7 @@ export default function ListsView({
                     type="button"
                     onClick={() => setNewNoteColor(c.color)}
                     style={{ backgroundColor: c.color }}
-                    className={`w-6 h-6 rounded-full border-2 transition-transform ${
+                    className={`w-5 h-5 rounded-full border transition-transform ${
                       newNoteColor === c.color ? 'scale-125 border-gray-600' : 'border-white'
                     }`}
                   />
@@ -279,7 +297,7 @@ export default function ListsView({
 
               <button
                 type="submit"
-                className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-[var(--color-primary-dark)]"
+                className="bg-[var(--color-primary)] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs hover:bg-[var(--color-primary-dark)]"
               >
                 Anpinnen 📌
               </button>
@@ -287,25 +305,26 @@ export default function ListsView({
           </form>
 
           {/* Sticky Notes Grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {notes.map(note => (
               <div
                 key={note.id}
                 style={{ backgroundColor: note.color || '#fef3c7' }}
-                className="p-3.5 rounded-2xl shadow-sm border border-black/5 flex flex-col justify-between relative group min-h-[110px]"
+                className="p-3 rounded-2xl shadow-xs border border-black/5 flex flex-col justify-between relative group min-h-[100px] min-w-0"
               >
                 <button
                   onClick={() => onDeleteNote(note.id)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-rose-500 opacity-60 hover:opacity-100"
+                  type="button"
+                  className="absolute top-1.5 right-1.5 text-gray-400 hover:text-rose-500 p-1 opacity-70"
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={11} />
                 </button>
-                <p className="text-xs font-semibold text-gray-800 line-clamp-4 leading-relaxed pr-3">
+                <p className="text-[11px] font-semibold text-gray-800 line-clamp-4 leading-relaxed pr-2">
                   "{note.content}"
                 </p>
-                <div className="mt-3 pt-1 border-t border-black/5 flex items-center justify-between text-[9px] text-gray-500 font-bold">
-                  <span>{note.author}</span>
-                  <span>{note.created_at}</span>
+                <div className="mt-2 pt-1 border-t border-black/5 flex items-center justify-between text-[8px] text-gray-500 font-bold">
+                  <span className="truncate">{note.author}</span>
+                  <span className="shrink-0">{note.created_at}</span>
                 </div>
               </div>
             ))}

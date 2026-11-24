@@ -15,12 +15,15 @@ const BASE_URL = 'api';
 
 // Seed data for offline / standalone mode
 const DEFAULT_PROFILE: ProfileData = {
-  partner_a_name: 'Alex',
-  partner_b_name: 'Sam',
-  start_date: '2023-05-12',
+  partner_a_name: '',
+  partner_b_name: '',
+  start_date: '',
+  partner_a_birthday: '',
+  partner_b_birthday: '',
   partner_a_city: 'Berlin',
   partner_b_city: 'München',
-  hugs_count: 42
+  hugs_count: 0,
+  setup_completed: false
 };
 
 const DEFAULT_MOODS: Record<string, MoodData> = {
@@ -136,12 +139,15 @@ export const api = {
     const cached = getLocal<ProfileData>('profile', DEFAULT_PROFILE);
     if (Object.keys(raw).length > 0) {
       const merged: ProfileData = {
-        partner_a_name: raw.partner_a_name || cached.partner_a_name,
-        partner_b_name: raw.partner_b_name || cached.partner_b_name,
-        start_date: raw.start_date || cached.start_date,
-        partner_a_city: raw.partner_a_city || cached.partner_a_city,
-        partner_b_city: raw.partner_b_city || cached.partner_b_city,
-        hugs_count: parseInt(raw.hugs_count || String(cached.hugs_count), 10) || 0
+        partner_a_name: raw.partner_a_name || cached.partner_a_name || '',
+        partner_b_name: raw.partner_b_name || cached.partner_b_name || '',
+        start_date: raw.start_date || cached.start_date || '',
+        partner_a_birthday: raw.partner_a_birthday || cached.partner_a_birthday || '',
+        partner_b_birthday: raw.partner_b_birthday || cached.partner_b_birthday || '',
+        partner_a_city: raw.partner_a_city || cached.partner_a_city || 'Berlin',
+        partner_b_city: raw.partner_b_city || cached.partner_b_city || 'München',
+        hugs_count: parseInt(raw.hugs_count || String(cached.hugs_count), 10) || 0,
+        setup_completed: raw.setup_completed !== undefined ? (raw.setup_completed === 'true' || (raw.setup_completed as any) === true) : cached.setup_completed
       };
       setLocal('profile', merged);
       return merged;
@@ -158,6 +164,21 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ key, value })
     });
+  },
+
+  async saveFullProfile(newProfile: Partial<ProfileData>): Promise<void> {
+    const cached = getLocal<ProfileData>('profile', DEFAULT_PROFILE);
+    const updated = { ...cached, ...newProfile };
+    setLocal('profile', updated);
+
+    for (const [key, value] of Object.entries(newProfile)) {
+      if (value !== undefined) {
+        await fetchWithFallback('profile', {
+          method: 'POST',
+          body: JSON.stringify({ key, value: String(value) })
+        });
+      }
+    }
   },
 
   async sendHug(): Promise<number> {

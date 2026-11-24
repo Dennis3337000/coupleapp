@@ -4,9 +4,12 @@ export interface ProfileData {
   partner_a_name: string;
   partner_b_name: string;
   start_date: string;
+  partner_a_birthday?: string;
+  partner_b_birthday?: string;
   partner_a_city: string;
   partner_b_city: string;
   hugs_count: number;
+  setup_completed?: boolean | string;
 }
 
 export interface MoodData {

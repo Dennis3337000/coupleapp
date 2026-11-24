@@ -23,6 +23,7 @@ import QuizView from './components/QuizView';
 import ListsView from './components/ListsView';
 import DistanceView from './components/DistanceView';
 import SettingsModal from './components/SettingsModal';
+import OnboardingModal from './components/OnboardingModal';
 
 export default function App() {
   const [role, setRole] = useState<UserRole>(() => {
@@ -31,16 +32,20 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Core App States
   const [profile, setProfile] = useState<ProfileData>({
-    partner_a_name: 'Alex',
-    partner_b_name: 'Sam',
-    start_date: '2023-05-12',
+    partner_a_name: '',
+    partner_b_name: '',
+    start_date: '',
+    partner_a_birthday: '',
+    partner_b_birthday: '',
     partner_a_city: 'Berlin',
     partner_b_city: 'München',
-    hugs_count: 42
+    hugs_count: 0,
+    setup_completed: false
   });
 
   const [moods, setMoods] = useState<Record<string, MoodData>>({});
@@ -81,7 +86,14 @@ export default function App() {
           api.getQuiz()
         ]);
 
-        if (profData) setProfile(profData);
+        if (profData) {
+          setProfile(profData);
+          const hasCompleted = profData.setup_completed === true || localStorage.getItem('cl_onboarding_done') === 'true';
+          const hasNames = !!profData.partner_a_name && !!profData.partner_b_name;
+          if (!hasCompleted || !hasNames) {
+            setShowOnboarding(true);
+          }
+        }
         if (moodData) setMoods(moodData);
         if (eventData) setEvents(eventData);
         if (mealData) setMeals(mealData);
@@ -104,7 +116,7 @@ export default function App() {
 
   const handleToggleRole = () => {
     const nextRole = role === 'Partner A' ? 'Partner B' : 'Partner A';
-    const nextName = nextRole === 'Partner A' ? profile.partner_a_name : profile.partner_b_name;
+    const nextName = nextRole === 'Partner A' ? (profile.partner_a_name || 'Partner A') : (profile.partner_b_name || 'Partner B');
     setRole(nextRole);
     localStorage.setItem('cl_user_role', nextRole);
     showToast(`Eingeloggt als ${nextName} (${nextRole}) 💕`);
@@ -114,8 +126,20 @@ export default function App() {
     if (!newRole) return;
     setRole(newRole);
     localStorage.setItem('cl_user_role', newRole);
-    const name = newRole === 'Partner A' ? profile.partner_a_name : profile.partner_b_name;
+    const name = newRole === 'Partner A' ? (profile.partner_a_name || 'Partner A') : (profile.partner_b_name || 'Partner B');
     showToast(`Eingeloggt als ${name} (${newRole}) 💕`);
+  };
+
+  const handleCompleteOnboarding = async (completedProfile: ProfileData, selectedRole: UserRole) => {
+    setProfile(completedProfile);
+    if (selectedRole) {
+      setRole(selectedRole);
+      localStorage.setItem('cl_user_role', selectedRole);
+    }
+    localStorage.setItem('cl_onboarding_done', 'true');
+    await api.saveFullProfile(completedProfile);
+    setShowOnboarding(false);
+    showToast('Willkommen in eurem Couple-Space! 🎉❤️');
   };
 
   // Days together calculation
@@ -260,11 +284,10 @@ export default function App() {
   const unboughtCount = shopping.filter(s => !s.is_bought).length;
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] pb-20 max-w-md mx-auto relative shadow-2xl flex flex-col font-sans select-none overflow-x-hidden">
-      {/* Background Animated Blobs */}
-      <div className="absolute top-[-100px] left-[-100px] w-72 h-72 bg-[var(--color-primary-light)] rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob pointer-events-none" />
-      <div className="absolute top-[200px] right-[-120px] w-72 h-72 bg-[var(--color-secondary)] rounded-full mix-blend-multiply filter blur-3xl opacity-35 animate-blob animation-delay-2000 pointer-events-none" />
-      <div className="absolute bottom-[-100px] left-[-60px] w-72 h-72 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 pointer-events-none" />
+    <div className="min-h-[100dvh] w-full max-w-md mx-auto relative flex flex-col font-sans select-none overflow-x-hidden pb-18">
+      {/* Background Subtle Blobs with pointer-events-none */}
+      <div className="fixed top-[-50px] left-[-50px] w-56 h-56 bg-[var(--color-primary-light)] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob pointer-events-none" />
+      <div className="fixed top-[200px] right-[-60px] w-56 h-56 bg-[var(--color-secondary)] rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 pointer-events-none" />
 
       {/* Header */}
       <Header
@@ -277,13 +300,13 @@ export default function App() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-18 left-1/2 -translate-x-1/2 z-50 bg-gray-900/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-md animate-in flex items-center gap-2">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-gray-900/90 text-white text-xs font-bold px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md animate-in flex items-center gap-1.5 pointer-events-none whitespace-nowrap">
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* Main View Area */}
-      <main className="flex-1 px-4 z-10 overflow-y-auto">
+      <main className="flex-1 px-3 z-10 overflow-y-auto w-full max-w-full">
         {activeTab === 'dashboard' && (
           <Dashboard
             role={role}
@@ -357,6 +380,15 @@ export default function App() {
         )}
       </main>
 
+      {/* Onboarding Wizard Modal on First Open */}
+      {showOnboarding && (
+        <OnboardingModal
+          initialProfile={profile}
+          initialRole={role}
+          onComplete={handleCompleteOnboarding}
+        />
+      )}
+
       {/* Settings Modal */}
       {isSettingsOpen && (
         <SettingsModal
@@ -366,6 +398,10 @@ export default function App() {
           onSetRole={handleSetRole}
           onUpdateProfileKey={handleUpdateProfileKey}
           onResetData={handleResetData}
+          onRestartOnboarding={() => {
+            setIsSettingsOpen(false);
+            setShowOnboarding(true);
+          }}
         />
       )}
 

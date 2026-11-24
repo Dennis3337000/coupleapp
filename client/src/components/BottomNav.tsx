@@ -17,7 +17,7 @@ export default function BottomNav({ activeTab, onSelectTab, shoppingBadgeCount }
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-md border-t border-pink-100 flex justify-around items-center h-16 z-40 px-1 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-pink-100 flex justify-around items-center h-15 z-40 px-0.5 shadow-lg safe-bottom-nav">
       {tabs.map(tab => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -25,20 +25,25 @@ export default function BottomNav({ activeTab, onSelectTab, shoppingBadgeCount }
         return (
           <button
             key={tab.id}
+            type="button"
             onClick={() => onSelectTab(tab.id)}
-            className={`flex flex-col items-center justify-center flex-1 h-full relative transition-all ${
-              isActive ? 'text-[var(--color-primary-dark)] scale-105' : 'text-gray-400 hover:text-gray-600'
+            className={`flex flex-col items-center justify-center flex-1 py-1 min-w-0 h-full relative transition-all active:scale-90 ${
+              isActive ? 'text-[var(--color-primary-dark)]' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             <div className="relative">
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
               {!!tab.badge && tab.badge > 0 && (
-                <span className="absolute -top-1 -right-2 bg-pink-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1 -right-2 bg-pink-500 text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse">
                   {tab.badge}
                 </span>
               )}
             </div>
-            <span className={`text-[10px] mt-1 font-bold ${isActive ? 'text-gray-800' : 'text-gray-400'}`}>
+            <span
+              className={`text-[9px] mt-0.5 tracking-tighter truncate max-w-full text-center ${
+                isActive ? 'font-black text-gray-800' : 'font-semibold text-gray-400'
+              }`}
+            >
               {tab.label}
             </span>
           </button>
